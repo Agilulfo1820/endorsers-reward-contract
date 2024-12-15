@@ -12,6 +12,10 @@ The distributeRewards function is called by a scheduled job on Vechain.Energy.
 
 0x0246cda40dcb9fc5aef18f3b391140b1feba4149
 
+## Admin Address
+
+0x6B020E5C8E8574388a275cC498B27E3EB91ec3f2 (cleanify.vet)
+
 ## Features
 
 - ✅ Hardhat configuration for VeChain networks (Solo, Testnet, Mainnet)
