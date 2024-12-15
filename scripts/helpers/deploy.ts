@@ -35,7 +35,7 @@ export const getOrDeployContractInstances = async ({
         upgrader: deployer.address,
         admin: deployer.address,
         appId:
-          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x899de0d0f0b39e484c8835b2369194c4c102b230c813862db383d44a4efe14d3",
         allocationVotingGovernor: "0x89A00Bb0947a30FF95BEeF77a66AEdE3842Fe5B7",
         rewardsPool: "0x6Bee7DDab6c99d5B2Af0554EaEA484CE18F52631",
         x2earnApps: "0x8392B7CCc763dB03b47afcD8E8f5e24F9cf0554D",
@@ -51,7 +51,7 @@ export const getOrDeployContractInstances = async ({
 
   printLogs &&
     console.log(
-      `EndorsersRewardDistributor contract deployed at ${endorsersRewardDistributorContract.getAddress()}`
+      `EndorsersRewardDistributor contract deployed at ${await endorsersRewardDistributorContract.getAddress()}`
     );
 
   cachedDeployInstance = {

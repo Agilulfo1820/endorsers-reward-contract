@@ -23,8 +23,6 @@ export const deployProxy = async (
 
   // Deploy the proxy contract, link it to the implementation and call the initializer
   const proxyFactory = await ethers.getContractFactory("ContractProxy");
-  console.log(proxyFactory);
-
   const proxy = await proxyFactory.deploy(
     await implementation.getAddress(),
     getInitializerData(Contract.interface, args, version)
@@ -212,7 +210,8 @@ export function getInitializerData(
   args: any[],
   version?: number
 ) {
-  const initializer = version ? `initializeV${version}` : "initialize";
+  const initializer =
+    version && version > 1 ? `initializeV${version}` : "initialize";
 
   const fragment = contractInterface.getFunction(initializer);
   if (!fragment) {
