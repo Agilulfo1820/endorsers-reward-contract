@@ -40,7 +40,7 @@ export const getOrDeployContractInstances = async ({
         rewardsPool: "0x6Bee7DDab6c99d5B2Af0554EaEA484CE18F52631",
         x2earnApps: "0x8392B7CCc763dB03b47afcD8E8f5e24F9cf0554D",
         allocationPool: "0x4191776F05f4bE4848d3f4d587345078B439C7d3",
-        startRound: 22,
+        startRound: 23,
         rewardsPercentage: 5,
       },
     ],

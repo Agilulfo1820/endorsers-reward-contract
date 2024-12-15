@@ -10,7 +10,7 @@ The distributeRewards function is called by a scheduled job on Vechain.Energy.
 
 ## Mainnet Address
 
-0x0246cda40dcb9fc5aef18f3b391140b1feba4149
+0xe781cd08cdd1c6d10a07a83ce42ef40880b94dfd
 
 ## Admin Address
 

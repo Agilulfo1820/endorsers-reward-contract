@@ -8,6 +8,7 @@ import {IXAllocationVotingGovernor} from "./interfaces/IXAllocationVotingGoverno
 import {IX2EarnRewardsPool} from "./interfaces/IX2EarnRewardsPool.sol";
 import {IX2EarnApps} from "./interfaces/IX2EarnApps.sol";
 import {IXAllocationPool} from "./interfaces/IXAllocationPool.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  * @title EndorsersRewardDistributor
@@ -357,7 +358,7 @@ contract EndorsersRewardDistributor is
 
     /// @notice Returns the version of the contract
     function version() external pure returns (string memory) {
-        return "1";
+        return "2";
     }
 
     // ---------- Internal ---------- //
@@ -375,7 +376,7 @@ contract EndorsersRewardDistributor is
         json = abi.encodePacked(
             json,
             ',"description": "Endorsement rewards for round ',
-            roundId,
+            Strings.toString(roundId),
             '"'
         );
 
