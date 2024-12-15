@@ -180,63 +180,36 @@ contract EndorsersRewardDistributor is
 
     /// @notice Distributes rewards to endorsers for the previous round
     function distributeRewards() external nonReentrant {
-        // Get the storage
-        EndorsersRewardDistributorStorage
-            storage $ = _getEndorsersRewardDistributorStorage();
-
-        // get current round
-        uint256 currentRound = $.allocationVotingGovernor.currentRoundId();
-        // we always distribute the rewards for the previous round (so we are sure that the allocation is set)
-        uint256 roundToDistribute = currentRound - 1;
-        require(
-            roundToDistribute > $.startRound,
-            "EndorsersRewardDistributor: current round is less than start round"
-        );
-
-        // check that rewards for this round are not already distributed
-        require(
-            !$.rewardsDistributed[roundToDistribute],
-            "EndorsersRewardDistributor: rewards for this round are already distributed"
-        );
-
+        EndorsersRewardDistributorStorage storage $ = _getEndorsersRewardDistributorStorage();
+        
+        uint256 roundToDistribute = getRoundToDistribute();
         $.rewardsDistributed[roundToDistribute] = true;
-
-        // get the amount of rewards the app earned for this round
-        (uint256 appRewards, , , ) = $.allocationPool.roundEarnings(
-            roundToDistribute,
-            $.appId
+        
+        uint256 totalEndorsersRewards = getTotalEndorsersRewards(roundToDistribute);
+        
+        (
+            address[] memory endorsers,
+            uint256[] memory endorsersScores,
+            uint256 totalEndorsersScore
+        ) = getEndorsersAndScores();
+        
+        uint256[] memory rewardAmounts = calculateEndorserRewards(
+            totalEndorsersRewards,
+            endorsersScores,
+            totalEndorsersScore
         );
-        uint256 totalEndorsersRewards = (appRewards * $.rewardsPercentage) /
-            100;
-
-        // Retrieve the endorsers
-        address[] memory endorsers = $.x2earnApps.getEndorsers($.appId);
-
-        // For each endorser get its score and sum all scores to get the total score
-        uint256 totalEndorsersScore = 0;
-        uint256[] memory endorsersScores = new uint256[](endorsers.length);
+        
+        string memory proof = buildProof(roundToDistribute);
+        
         for (uint256 i = 0; i < endorsers.length; i++) {
-            uint256 score = $.x2earnApps.getUsersEndorsementScore(endorsers[i]);
-
-            totalEndorsersScore += score;
-            endorsersScores[i] = score;
-        }
-
-        // For each endorser, calculate its rewards
-        for (uint256 i = 0; i < endorsers.length; i++) {
-            uint256 endorserRewards = (totalEndorsersRewards *
-                endorsersScores[i]) / totalEndorsersScore;
-
-            string memory proof = buildProof(roundToDistribute);
-
             $.rewardsPool.distributeRewardDeprecated(
                 $.appId,
-                endorserRewards,
+                rewardAmounts[i],
                 endorsers[i],
                 proof
             );
         }
-
+        
         emit EndorsersRewardsDistributed(
             roundToDistribute,
             totalEndorsersRewards,
@@ -256,6 +229,83 @@ contract EndorsersRewardDistributor is
     }
 
     // ---------- Getters ---------- //
+
+    /// @notice Gets the round that should be distributed
+    /// @return roundToDistribute The round ID for which rewards should be distributed
+    function getRoundToDistribute() public view returns (uint256) {
+        EndorsersRewardDistributorStorage storage $ = _getEndorsersRewardDistributorStorage();
+        
+        uint256 currentRound = $.allocationVotingGovernor.currentRoundId();
+        uint256 roundToDistribute = currentRound - 1;
+        
+        require(
+            roundToDistribute > $.startRound,
+            "EndorsersRewardDistributor: current round is less than start round"
+        );
+        
+        require(
+            !$.rewardsDistributed[roundToDistribute],
+            "EndorsersRewardDistributor: rewards for this round are already distributed"
+        );
+        
+        return roundToDistribute;
+    }
+
+    /// @notice Gets the total rewards amount for endorsers for a specific round
+    /// @param roundId The round ID to get rewards for
+    /// @return The total amount of rewards to distribute to endorsers
+    function getTotalEndorsersRewards(uint256 roundId) public view returns (uint256) {
+        EndorsersRewardDistributorStorage storage $ = _getEndorsersRewardDistributorStorage();
+        
+        (uint256 appRewards, , , ) = $.allocationPool.roundEarnings(
+            roundId,
+            $.appId
+        );
+        return (appRewards * $.rewardsPercentage) / 100;
+    }
+
+    /// @notice Gets the endorsers and their scores for the current distribution
+    /// @return endorsers Array of endorser addresses
+    /// @return endorsersScores Array of endorser scores
+    /// @return totalEndorsersScore Sum of all endorser scores
+    function getEndorsersAndScores() public view returns (
+        address[] memory endorsers,
+        uint256[] memory endorsersScores,
+        uint256 totalEndorsersScore
+    ) {
+        EndorsersRewardDistributorStorage storage $ = _getEndorsersRewardDistributorStorage();
+        
+        endorsers = $.x2earnApps.getEndorsers($.appId);
+        endorsersScores = new uint256[](endorsers.length);
+        totalEndorsersScore = 0;
+        
+        for (uint256 i = 0; i < endorsers.length; i++) {
+            uint256 score = $.x2earnApps.getUsersEndorsementScore(endorsers[i]);
+            totalEndorsersScore += score;
+            endorsersScores[i] = score;
+        }
+        
+        return (endorsers, endorsersScores, totalEndorsersScore);
+    }
+
+    /// @notice Calculates the reward amount for each endorser
+    /// @param totalRewards Total rewards to distribute
+    /// @param endorsersScores Array of endorser scores
+    /// @param totalEndorsersScore Sum of all endorser scores
+    /// @return rewardAmounts Array of reward amounts for each endorser
+    function calculateEndorserRewards(
+        uint256 totalRewards,
+        uint256[] memory endorsersScores,
+        uint256 totalEndorsersScore
+    ) public pure returns (uint256[] memory rewardAmounts) {
+        rewardAmounts = new uint256[](endorsersScores.length);
+        
+        for (uint256 i = 0; i < endorsersScores.length; i++) {
+            rewardAmounts[i] = (totalRewards * endorsersScores[i]) / totalEndorsersScore;
+        }
+        
+        return rewardAmounts;
+    }
 
     /// @notice Returns whether rewards have been distributed for a given round
     /// @param roundId - the round ID

@@ -1,6 +1,16 @@
-# VeChain Hardhat Template
+# Endorsers Reward Distributor
 
-A complete development environment template for building smart contracts on VeChain using Hardhat. This template comes pre-configured with everything you need to start developing, testing, and deploying smart contracts on VeChain networks.
+This contract is responsible for distributing rewards (from previous round) to endorsers.
+The percentage of the reward is fixed, but can be set by the admin.
+Rewards can be distributed only once per round.
+Rewards amount is calculated based on the tier of their X-Node.
+Rewards are distributed through the `X2EarnRewardsPool` contract.
+
+The distributeRewards function is called by a scheduled job on Vechain.Energy.
+
+## Mainnet Address
+
+0x0246cda40dcb9fc5aef18f3b391140b1feba4149
 
 ## Features
 
