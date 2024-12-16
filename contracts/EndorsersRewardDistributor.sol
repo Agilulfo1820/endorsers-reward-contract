@@ -358,7 +358,13 @@ contract EndorsersRewardDistributor is
 
     /// @notice Returns the version of the contract
     function version() external pure returns (string memory) {
-        return "2";
+        return "3";
+    }
+
+    /// @notice Returns the owner of the contract
+    function owner() external pure returns (address) {
+        // hardcoded to cleanify.vet in order to to set the vet subdomain
+        return 0x6B020E5C8E8574388a275cC498B27E3EB91ec3f2;
     }
 
     // ---------- Internal ---------- //

@@ -12,24 +12,24 @@ async function main() {
     `Upgrading contract at address: ${contractAddress} on network ${network.name} (${networkConfig.url})`
   );
 
-  const endorsersRewardDistributorV2 = (await upgradeProxy(
+  const endorsersRewardDistributorV3 = (await upgradeProxy(
     "EndorsersRewardDistributor",
     "EndorsersRewardDistributor",
     contractAddress,
     [],
     {
-      version: 2,
+      version: 3,
     }
   )) as EndorsersRewardDistributor;
 
   console.log(`EndorsersRewardDistributor upgraded`);
 
   // check that upgrade was successful
-  const version = await endorsersRewardDistributorV2.version();
+  const version = await endorsersRewardDistributorV3.version();
   console.log(`New EndorsersRewardDistributor version: ${version}`);
 
-  if (parseInt(version) !== 2) {
-    throw new Error(`EndorsersRewardDistributor version is not 2: ${version}`);
+  if (parseInt(version) !== 3) {
+    throw new Error(`EndorsersRewardDistributor version is not 3: ${version}`);
   }
 
   console.log("Execution completed");
