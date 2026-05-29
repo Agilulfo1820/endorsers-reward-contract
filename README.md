@@ -73,8 +73,53 @@ distribution.
 
 ### 6. Schedule distribution
 
-Set up a job (e.g. on vechain.energy) to call `distributeRewards()` once per
-round, after the previous round closes.
+Set up a job to call `distributeRewards()` once per round, after the previous
+round closes. See [Interacting with the contract](#interacting-with-the-contract)
+below.
+
+## Interacting with the contract
+
+Once deployed, you can read state and call `distributeRewards()` in a couple
+of ways.
+
+### Option 1 — VeChain Inspector (manual / one-off)
+
+[inspector.vecha.in](https://inspector.vecha.in/) is a UI for any deployed
+contract. Use it to manually trigger `distributeRewards()` or to inspect
+state (`getRewardsPercentage`, `rewardsDistributed`, `getEndorsersAndScores`,
+etc.).
+
+1. Open [inspector.vecha.in](https://inspector.vecha.in/) and pick the
+   network (Mainnet / Testnet) in the top right.
+2. Click **Import** in the left sidebar → **select folder** → pick the
+   `artifacts/` folder from this repo (run `yarn compile` first if you don't
+   have one).
+3. Choose **EndorsersRewardDistributor** from the list and paste your deployed
+   proxy address.
+4. The contract appears in the sidebar. Open the **Write** tab and call
+   `distributeRewards` — or use **Read** to inspect any view function.
+
+![VeChain Inspector view of the contract](./assets/inspector.png)
+
+### Option 2 — vechain.energy Scheduler (automated)
+
+[vechain.energy](https://vechain.energy) can call `distributeRewards()` on a
+cron schedule and pay the gas via a sponsorship, so the function runs hands-off
+every round.
+
+1. Sign in to [vechain.energy](https://vechain.energy) and create a project.
+2. Go to the **Scheduler** section and click **Add Schedule**.
+3. Set:
+   - **Title** — e.g. `Distribute Endorsers Rewards`
+   - **Contract address** — your deployed proxy
+   - **ABI / function** — `distributeRewards()`
+   - **Interval** — a cron expression matching your round cadence (e.g.
+     `0 12 * * 1` for weekly Mondays at 12:00 UTC)
+4. Each scheduler is assigned its own wallet. Fund that wallet (and/or
+   configure a Sponsorship) so it can pay for the transactions.
+5. Execution logs appear in the dashboard once it starts running.
+
+![vechain.energy Scheduler configuration](./assets/vechain-energy.png)
 
 ## Upgrading
 
