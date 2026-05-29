@@ -1,106 +1,122 @@
-# Endorsers Reward Distributor
+# X2Earn Endorsers Reward Distributor
 
-This contract is responsible for distributing rewards (from previous round) to endorsers.
-The percentage of the reward is fixed, but can be set by the admin.
-Rewards can be distributed only once per round.
-Rewards amount is calculated based on the tier of their X-Node.
-Rewards are distributed through the `X2EarnRewardsPool` contract.
+A generic, upgradeable contract that any [VeBetterDAO](https://vebetterdao.org)
+X2Earn app can deploy to share a fixed percentage of each round's app rewards
+with its endorsers, weighted by the endorsement score of each endorser's
+X-Node.
 
-The distributeRewards function is called by a scheduled job on Vechain.Energy.
+Rewards are distributed through the `X2EarnRewardsPool`, once per round, and
+can be triggered permissionlessly (typically via a scheduled job — for example
+on [vechain.energy](https://vechain.energy)).
 
-## Mainnet Address
+## How it works
 
-0xe781cd08cdd1c6d10a07a83ce42ef40880b94dfd
+1. After an allocation round closes, anyone calls `distributeRewards()`.
+2. The contract reads your app's earnings for that round from `XAllocationPool`.
+3. It takes `rewardsPercentage` of those earnings as the endorser pool.
+4. It fetches your app's endorsers from `X2EarnApps` and weights each share by
+   that endorser's `getUsersEndorsementScore` (their X-Node tier).
+5. It calls `X2EarnRewardsPool.distributeRewardDeprecated` once per endorser.
 
-## Admin Address
+Rewards for a given round can only be distributed once.
 
-0x6B020E5C8E8574388a275cC498B27E3EB91ec3f2 (cleanify.vet)
+## Deploying your own instance
 
-## Features
-
-- ✅ Hardhat configuration for VeChain networks (Solo, Testnet, Mainnet)
-- 🐳 Thor-Solo instance for local development
-- 📦 Upgradeable smart contracts templates
-- 🧪 Comprehensive test suite setup
-- 🔧 Deploy and upgrade scripts
-- 🎭 Mock contracts for common VeChain contracts
-
-## Prerequisites
-
-- Node.js v20 (version specified in `.nvmrc`)
-- Yarn or npm
-- Docker (for running Thor-Solo)
-
-## Installation
-
-1. Install dependencies:
+### 1. Install
 
 ```bash
+nvm use            # node v20
 yarn install
 ```
 
-2.  Create your environment file:
+### 2. Configure
 
 ```bash
 cp .env.example .env
 ```
 
-## Usage
+Edit `.env` and set at least:
 
-### Local Development
+- `MNEMONIC` — the deployer wallet
+- `APP_ID` — your X2Earn app id (bytes32)
+- `START_ROUND` — the last completed round you do NOT want included
+- `REWARDS_PERCENTAGE` — share of each round's earnings to endorsers (0-100)
 
-1. Start the Thor-Solo instance:
+Optional:
+
+- `ADMIN_ADDRESS`, `UPGRADER_ADDRESS`, `VET_DOMAIN_OWNER` — default to the
+  deployer if not set. `VET_DOMAIN_OWNER` is the address returned by `owner()`
+  and is used to claim a `.vet` subdomain for the contract.
+- `ALLOCATION_VOTING_GOVERNOR`, `REWARDS_POOL`, `X2EARN_APPS`,
+  `ALLOCATION_POOL` — mainnet and testnet defaults are baked into the deploy
+  script. Only needed for solo / forks or to override.
+
+### 3. Deploy
+
+```bash
+yarn deploy:mainnet     # or :testnet, :solo
+```
+
+The proxy address is printed at the end. Save it.
+
+### 4. Authorize the contract as a reward distributor
+
+In the VeBetterDAO X2Earn admin UI (or by calling `X2EarnApps` directly),
+add the deployed proxy address as a reward distributor for your app. Without
+this, `distributeRewards()` will revert.
+
+### 5. Fund the rewards pool
+
+The `X2EarnRewardsPool` must hold enough B3TR for your app to cover the
+endorser share each round. Top it up the same way you do for any other reward
+distribution.
+
+### 6. Schedule distribution
+
+Set up a job (e.g. on vechain.energy) to call `distributeRewards()` once per
+round, after the previous round closes.
+
+## Upgrading
+
+```bash
+PROXY_ADDRESS=0x... yarn upgrade:mainnet
+```
+
+The deployer must hold `UPGRADER_ROLE` on the proxy.
+
+## Local development
+
+Start a Thor-Solo node:
 
 ```bash
 yarn start-solo
 ```
 
-### Compile
+Compile, test, and deploy:
 
 ```bash
 yarn compile
-```
-
-### Deploy
-
-```bash
+yarn test
 yarn deploy:solo
 ```
 
-or
-
-```bash
-yarn deploy:testnet
-```
-
-or
-
-```bash
-yarn deploy:mainnet
-```
-
-### Test
-
-```bash
-yarn test
-```
-
-or to generate a coverage report:
-
-```bash
-yarn test:coverage:solidity
-```
-
-Will generate the coverage report in the `coverage` folder, open the `index.html` file in your browser to see the report.
-
-### Generate Docs
+Generate docs:
 
 ```bash
 yarn generate-docs
 ```
 
-Will generate the docs in the `docs` folder.
+## Admin operations
 
-## Warning
+- `setRewardsPercentage(uint256)` — change the endorser share. `DEFAULT_ADMIN_ROLE`.
+- `setVetDomainOwner(address)` — change the address returned by `owner()`.
+  `DEFAULT_ADMIN_ROLE`.
 
-This template is using the `@openzeppelin/contracts-upgradeable` `v5.0.2` and `@openzeppelin/contracts` `v5.0.2` in order to be compatible with the VeChain Solidity compiler version of `0.8.20`.
+## Compatibility
+
+Built against OpenZeppelin Contracts `5.0.2` (upgradeable + non-upgradeable) to
+match the VeChain Solidity compiler version `0.8.20`.
+
+## License
+
+MIT

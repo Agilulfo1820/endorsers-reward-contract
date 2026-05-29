@@ -52,6 +52,8 @@ contract EndorsersRewardDistributor is
         // state
         mapping(uint256 roundId => bool) rewardsDistributed;
         uint256 rewardsPercentage;
+        // address returned by owner() — used to claim a .vet subdomain for the contract
+        address vetDomainOwner;
     }
 
     // keccak256(abi.encode(uint256(keccak256("storage.EndorsersRewardDistributor")) - 1)) & ~bytes32(uint256(0xff))
@@ -71,6 +73,7 @@ contract EndorsersRewardDistributor is
     struct InitParams {
         address upgrader;
         address admin;
+        address vetDomainOwner;
         bytes32 appId;
         address allocationVotingGovernor;
         address rewardsPool;
@@ -91,6 +94,10 @@ contract EndorsersRewardDistributor is
         require(
             _params.admin != address(0),
             "EndorsersRewardDistributor: admin is the zero address"
+        );
+        require(
+            _params.vetDomainOwner != address(0),
+            "EndorsersRewardDistributor: vetDomainOwner is the zero address"
         );
         require(
             _params.appId != bytes32(0),
@@ -149,6 +156,7 @@ contract EndorsersRewardDistributor is
 
         // Set params
         $.rewardsPercentage = _params.rewardsPercentage;
+        $.vetDomainOwner = _params.vetDomainOwner;
     }
 
     // ---------- Modifiers ------------ //
@@ -227,6 +235,21 @@ contract EndorsersRewardDistributor is
             storage $ = _getEndorsersRewardDistributorStorage();
 
         $.rewardsPercentage = _rewardsPercentage;
+    }
+
+    /// @notice Sets the address returned by `owner()` (used for the .vet subdomain)
+    /// @param _vetDomainOwner - the new owner address
+    function setVetDomainOwner(
+        address _vetDomainOwner
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(
+            _vetDomainOwner != address(0),
+            "EndorsersRewardDistributor: vetDomainOwner is the zero address"
+        );
+        EndorsersRewardDistributorStorage
+            storage $ = _getEndorsersRewardDistributorStorage();
+
+        $.vetDomainOwner = _vetDomainOwner;
     }
 
     // ---------- Getters ---------- //
@@ -358,13 +381,15 @@ contract EndorsersRewardDistributor is
 
     /// @notice Returns the version of the contract
     function version() external pure returns (string memory) {
-        return "3";
+        return "4";
     }
 
-    /// @notice Returns the owner of the contract
-    function owner() external pure returns (address) {
-        // hardcoded to cleanify.vet in order to to set the vet subdomain
-        return 0x6B020E5C8E8574388a275cC498B27E3EB91ec3f2;
+    /// @notice Returns the address used to claim a .vet subdomain for the contract
+    function owner() external view returns (address) {
+        EndorsersRewardDistributorStorage
+            storage $ = _getEndorsersRewardDistributorStorage();
+
+        return $.vetDomainOwner;
     }
 
     // ---------- Internal ---------- //
