@@ -157,6 +157,22 @@ yarn generate-docs
 - `setVetDomainOwner(address)` — change the address returned by `owner()`.
   `DEFAULT_ADMIN_ROLE`.
 
+## FAQ
+
+### Why are rewards paid from the *previous* round, not the current one?
+
+Because the current round is still active and the protocol has not paid your
+app for it yet. The amount your app earned for the round only becomes known
+after it closes.
+
+Example: if the current allocation round is 55, the scheduler runs *during*
+round 55 but distributes rewards for round 54 — that's the most recent
+completed round, so `XAllocationPool` can tell us exactly how much your app
+received. We don't yet know the round-55 earnings.
+
+This is why `getRoundToDistribute()` returns `currentRound - 1` and
+`distributeRewards()` records that round as paid.
+
 ## Compatibility
 
 Built against OpenZeppelin Contracts `5.0.2` (upgradeable + non-upgradeable) to
